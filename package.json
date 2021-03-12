@@ -1,6 +1,6 @@
 {
   "name": "xts-interactive-api",
-  "version": "2.0.9",
+  "version": "3.0.0",
   "description": "The official JS client library for the Symphony Fintech Trading API's",
   "main": "./lib/",
   "keywords": [

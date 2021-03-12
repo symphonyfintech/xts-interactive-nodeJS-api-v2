@@ -2,368 +2,381 @@
 
 var XTSInteractive = require('xts-interactive-api').Interactive;
 var XTSInteractiveWS = require('xts-interactive-api').WS;
-
+//uncomment line 6 and 7 and comment line 3 and 4 if you directly want to use the code from the example
+//var XTSInteractive = require('../lib/interactiveRestAPI');
+//var XTSInteractiveWS = require('../lib/interactiveSocket');
 var config = require('./config/config.json');
 
 let secretKey = config.secretKey;
 let appKey = config.appKey;
 let source = config.source;
 let url = config.url;
-
+let userID = null;
 
 //xtsInteractive for API calls and xtsInteractiveWS for events related functionality
 var xtsInteractive = null;
 var xtsInteractiveWS = null;
 
 (async () => {
+  //creating the instance of XTSRest
+  xtsInteractive = new XTSInteractive(url);
 
-    //creating the instance of XTSRest
-    xtsInteractive = new XTSInteractive(url);
+  //calling the logIn API
+  var loginRequest = {
+    secretKey,
+    appKey,
+    source,
+  };
+  let logIn = await xtsInteractive.logIn(loginRequest);
 
-    //calling the logIn API
-    var loginRequest = {
-        secretKey,
-        appKey,
-        source
-    }
-    let logIn = await xtsInteractive.logIn(loginRequest);
+  // checking for valid loginRequest
+  if (logIn && logIn.type == xtsInteractive.responseTypes.success) {
+    //creating the instance of XTSInteractiveWS
+    xtsInteractiveWS = new XTSInteractiveWS(url);
+    userID = logIn.result.userID;
 
-    // checking for valid loginRequest
-    if (logIn && logIn.type == xtsInteractive.responseTypes.success) {
+    //Instantiating the socket instance
+    var socketInitRequest = {
+      userID: logIn.result.userID,
+      token: logIn.result.token, // Token Generated after successful LogIn
+    };
+    xtsInteractiveWS.init(socketInitRequest);
 
-        //creating the instance of XTSInteractiveWS
-        xtsInteractiveWS = new XTSInteractiveWS(url);
+    //Registering the socket Events
+    await registerEvents();
 
-        //Instantiating the socket instance
-        var socketInitRequest = {
-            userID: logIn.result.userID,
-            token: logIn.result.token   // Token Generated after successful LogIn
-        }
-        xtsInteractiveWS.init(socketInitRequest);
-
-        //Registering the socket Events
-        await registerEvents();
-
-        //calling the remaining methods of the Interactive API
-        testAPI();
-
-    } else {
-        //In case of failure
-        console.error(logIn);
-    }
+    //calling the remaining methods of the Interactive API
+    testAPI();
+  } else {
+    //In case of failure
+    console.error(logIn);
+  }
 })();
 
-
 async function testAPI() {
+  //calling to get the enums
+  let reqObject = {
+    userID: userID,
+  };
+  await getEnums(reqObject);
 
-    //calling to get the enums
-    await getEnums();
+  //get user margin details
+  reqObject = {
+    clientID: userID,
+  };
+  await getBalance(reqObject);
 
-    //get user margin details 
-    await getBalance();
+  //get uuser profile details
 
-    //get uuser profile details 
-    await getProfile();
+  reqObject = {
+    clientID: userID,
+  };
+  await getProfile(reqObject);
 
-    let positionRequest = {
-        dayOrNet: xtsInteractive.dayOrNet.DAY,
-        clientID: "SYMPHONY"
-    }
+  let positionRequest = {
+    dayOrNet: 'NetWise',
+    clientID: userID,
+  };
 
-    // get user daywise and net wise position 
-    await getPositions(positionRequest);
+  // get user daywise and net wise position
+  await getPositions(positionRequest);
 
-    //get user holdings 
-    await getHoldings();
+  //get user holdings
+  reqObject = {
+    clientID: userID,
+  };
+  await getHoldings(reqObject);
 
-    // get user order book details 
-    await getOrderBook(appOrderID);
+  let orderBookRequest = {
+    clientID: userID,
+    appOrderID: 1200044795,
+  };
 
-    //get user trade book details 
-    await getTradeBook();
+  // get user order book details
+  await getOrderBook(orderBookRequest);
 
-    let placeOrderRequest = {
-        exchangeSegment: xtsInteractive.exchangeInfo.NSECM,
-        exchangeInstrumentID: 22,
-        productType: xtsInteractive.productTypes.MIS,
-        orderType: xtsInteractive.orderTypes.Limit,
-        orderSide: xtsInteractive.orderSide.BUY,
-        timeInForce: xtsInteractive.dayOrNet.DAY,
-        disclosedQuantity: 0,
-        orderQuantity: 20,
-        limitPrice: 1500.00,
-        stopPrice: 1600.00,
-        orderUniqueIdentifier: "45485"
-    }
+  reqObject = {
+    clientID: userID,
+  };
 
-    //place order 
-    await placeOrder(placeOrderRequest);
+  //get user trade book details
+  await getTradeBook(reqObject);
 
-    let modifyOrderRequest = {
-        appOrderID: 1991237756,
-        modifiedProductType: xtsInteractive.productTypes.NRML,
-        modifiedOrderType: xtsInteractive.orderTypes.Limit,
-        modifiedOrderQuantity: 100,
-        modifiedDisclosedQuantity: 0,
-        modifiedLimitPrice: 300,
-        modifiedStopPrice: 300,
-        modifiedTimeInForce: xtsInteractive.dayOrNet.DAY,
-        orderUniqueIdentifier: "5656"
-    }
+  let placeOrderRequest = {
+    exchangeSegment: 'NSECM',
+    exchangeInstrumentID: 22,
+    productType: 'NRML',
+    orderType: 'MARKET',
+    orderSide: 'BUY',
+    timeInForce: 'DAY',
+    disclosedQuantity: 0,
+    orderQuantity: 20,
+    limitPrice: 1500.0,
+    stopPrice: 1600.0,
+    orderUniqueIdentifier: '45485',
+    clientID: userID,
+  };
 
-    // modify order 
-    await modifyOrder(modifyOrderRequest);
+  //place order
+  await placeOrder(placeOrderRequest);
 
-    let cancelOrderRequest = {
-        appOrderID: 1828071433,
-        orderUniqueIdentifier: 155151
-    }
+  let modifyOrderRequest = {
+    appOrderID: 1200037025,
+    modifiedProductType: 'CO',
+    modifiedOrderType: 'MARKET',
+    modifiedOrderQuantity: 100,
+    modifiedDisclosedQuantity: 0,
+    modifiedLimitPrice: 300,
+    modifiedStopPrice: 300,
+    modifiedTimeInForce: 'DAY',
+    orderUniqueIdentifier: '454845',
+    clientID: userID,
+  };
 
-    // cancel order 
-    await cancelOrder(cancelOrderRequest);
+  // modify order
+  await modifyOrder(modifyOrderRequest);
 
-    let placeCoverOrderRequest = {
-        exchangeSegment: xtsInteractive.exchangeInfo.NSECM,
-        exchangeInstrumentID: 22,
-        orderSide: xtsInteractive.orderSide.BUY,
-        orderQuantity: 2,
-        disclosedQuantity: 2,
-        limitPrice: 2054,
-        stopPrice: 2054,
-        orderUniqueIdentifier: "45485"
-    }
+  let cancelOrderRequest = {
+    appOrderID: 1828071433,
+    orderUniqueIdentifier: 155151,
+  };
 
-    //place cover order 
-    await placeCoverOrder(placeCoverOrderRequest);
+  // cancel order
+  await cancelOrder(cancelOrderRequest);
 
-    //exit cover order
-    await exitCoverOrder("2426016103");
+  let placeCoverOrderRequest = {
+    exchangeSegment: 'NSECM',
+    exchangeInstrumentID: 22,
+    orderSide: 'Buy',
+    orderQuantity: 2,
+    disclosedQuantity: 0,
+    limitPrice: 2054,
+    stopPrice: 2054,
+    orderType: 'MARKET',
+    orderUniqueIdentifier: '45485',
+    clientID: userID,
+  };
 
-    let positionConversionRequest = {
-        appOrderID: 1991237756,
-        executionID: 1556,
-        oldProductType: xtsInteractive.productTypes.NRML,
-        newProductType: xtsInteractive.productTypes.MIS
-    }
+  //place cover order
+  await placeCoverOrder(placeCoverOrderRequest);
 
-    // position conversion 
-    await positionConversion(positionConversionRequest);
+  let exitCoverOrderRequest = {
+    appOrderID: '1400070884',
+    clientID: userID,
+    orderUniqueIdentifier: '454845',
+  };
 
-    let squareOffRequest = {
-        exchangeSegment: xtsInteractive.exchangeInfo.NSECM,
-        exchangeInstrumentID: 22,
-        productType: xtsInteractive.productTypes.NRML,
-        squareoffMode: xtsInteractive.positionSqureOffMode.DayWise,
-        positionSquareOffQuantityType: xtsInteractive.positionSquareOffQuantityType.ExactQty,
-        squareOffQtyValue: 5
-    }
+  //exit cover order
+  await exitCoverOrder(exitCoverOrderRequest);
 
-    //square off 
-    await squareOff(squareOffRequest);
+  let positionConversionRequest = {
+    exchangeSegment: 'NSECM',
+    exchangeInstrumentID: 1922,
+    oldProductType: 'MIS',
+    newProductType: 'CNC',
+    isDayWise: false,
+    targetQty: '1',
+    clientID: userID,
+  };
 
-    let exchangeMessageRequest = {
-        exchangeSegment: xtsInteractive.exchangeInfo.NSECM
-    }
+  // position conversion
+  await positionConversion(positionConversionRequest);
 
-    //exchange message 
-    await exchangeMessage(exchangeMessageRequest);
+  let bracketOrderRequest = {
+    orderSide: 'BUY',
+    disclosedQuantity: 0,
+    exchangeSegment: 'NSECM',
+    exchangeInstrumentID: 22,
+    limitPrice: 1665.9,
+    orderType: 'MARKET',
+    orderQuantity: 1,
+    squarOff: '1',
+    stopLossPrice: 1,
+    trailingStoploss: 0,
+  };
+  //bracketOrder
+  await bracketOrder(bracketOrderRequest);
 
-    let exchangeStatusRequest = {
-        userID: "SYMPHONY"
-    }
-    //exchange status 
-    await exchangeStatus(exchangeStatusRequest);
+  let modifyBracketOrderRequest = {
+    appOrderID: 2500070878,
+    limitPrice: 1396.4,
+    orderQuantity: 12,
+    stopLossPrice: 365.5,
+  };
 
+  // modifyBracketOrder
+  await modifyBracketOrder(modifyBracketOrderRequest);
+
+  let deleteBracketOrderRequest = {
+    boEntryOrderId: 2500070879,
+  };
+
+  //cancelBracketOrder
+  await cancelBracketOrder(deleteBracketOrderRequest);
+
+  //exchange message
+  let exchangeMessageRequest = {
+    exchangeSegment: 'NSECM',
+  };
+  await exchangeMessage(exchangeMessageRequest);
+
+  let exchangeStatusRequest = {
+    userID: userID,
+  };
+  //exchange status
+  await exchangeStatus(exchangeStatusRequest);
 }
 
+var getEnums = async function (reqObject) {
+  let response = await xtsInteractive.getEnums(reqObject);
+  console.log(response);
+  return response;
+};
 
-var getEnums = async function () {
+var getBalance = async function (reqObject) {
+  let response = await xtsInteractive.getBalance(reqObject);
+  console.log(response);
+  return response;
+};
 
-    let response = await xtsInteractive.getEnums();
-    console.log(response);
-    return response;
-
-}
-
-
-var getBalance = async function () {
-
-    let response = await xtsInteractive.getBalance();
-    console.log(response);
-    return response;
-
-}
-
-var getProfile = async function () {
-
-    let response = await xtsInteractive.getProfile();
-    console.log(response);
-    return response;
-
-}
+var getProfile = async function (reqObject) {
+  let response = await xtsInteractive.getProfile(reqObject);
+  console.log(response);
+  return response;
+};
 
 var getPositions = async function (positionRequest) {
+  let response = await xtsInteractive.getPositions(positionRequest);
+  console.log(response);
+  return response;
+};
 
-    let response = await xtsInteractive.getPositions(positionRequest);
-    console.log(response);
-    return response;
+var getHoldings = async function (reqObject) {
+  let response = await xtsInteractive.getHoldings(reqObject);
+  console.log(response);
+  return response;
+};
 
-}
+var getOrderBook = async function (reqObject) {
+  let response = await xtsInteractive.getOrderBook(reqObject);
+  console.log(response);
+  return response;
+};
 
-var getHoldings = async function () {
+var bracketOrder = async function (reqObject) {
+  let response = await xtsInteractive.bracketOrder(reqObject);
+  console.log(response);
+  return response;
+};
 
-    let response = await xtsInteractive.getHoldings();
-    console.log(response);
-    return response;
+var cancelBracketOrder = async function (reqObject) {
+  let response = await xtsInteractive.cancelBracketOrder(reqObject);
+  console.log(response);
+  return response;
+};
 
-}
+var modifyBracketOrder = async function (reqObject) {
+  let response = await xtsInteractive.modifyBracketOrder(reqObject);
+  console.log(response);
+  return response;
+};
 
-var getOrderBook = async function () {
-
-    let response = await xtsInteractive.getOrderBook();
-    console.log(response);
-    return response;
-
-}
-
-var getTradeBook = async function () {
-
-    let response = await xtsInteractive.getTradeBook();
-    console.log(response);
-    return response;
-
-}
+var getTradeBook = async function (reqObject) {
+  let response = await xtsInteractive.getTradeBook();
+  console.log(response);
+  return response;
+};
 
 var placeOrder = async function (placeOrderRequest) {
-
-    let response = await xtsInteractive.placeOrder(placeOrderRequest);
-    console.log(response);
-    return response;
-
-}
+  let response = await xtsInteractive.placeOrder(placeOrderRequest);
+  console.log(response);
+  return response;
+};
 
 var modifyOrder = async function (modifyOrderRequest) {
-
-    let response = await xtsInteractive.modifyOrder(modifyOrderRequest);
-    console.log(response);
-    return response;
-
-}
+  let response = await xtsInteractive.modifyOrder(modifyOrderRequest);
+  console.log(response);
+  return response;
+};
 
 var cancelOrder = async function (cancelOrderRequest) {
-
-    let response = await xtsInteractive.cancelOrder(cancelOrderRequest);
-    console.log(response);
-    return response;
-
-}
+  let response = await xtsInteractive.cancelOrder(cancelOrderRequest);
+  console.log(response);
+  return response;
+};
 
 var placeCoverOrder = async function (placeCoverOrderRequest) {
+  let response = await xtsInteractive.placeCoverOrder(placeCoverOrderRequest);
+  console.log(response);
+  return response;
+};
 
-    let response = await xtsInteractive.placeCoverOrder(placeCoverOrderRequest);
-    console.log(response);
-    return response;
-
-}
-
-var exitCoverOrder = async function (appOrderID) {
-
-    let response = await xtsInteractive.exitCoverOrder(appOrderID);
-    console.log(response);
-    return response;
-
-}
+var exitCoverOrder = async function (exitCoverOrderRequest) {
+  let response = await xtsInteractive.exitCoverOrder(exitCoverOrderRequest);
+  console.log(response);
+  return response;
+};
 
 var positionConversion = async function (positionConversionRequest) {
-
-    let response = await xtsInteractive.positionConversion(positionConversionRequest);
-    console.log(response);
-    return response;
-
-}
-
-var squareOff = async function (squareOffRequest) {
-
-    let response = await xtsInteractive.squareOff(squareOffRequest);
-    console.log(response);
-    return response;
-
-}
+  let response = await xtsInteractive.positionConversion(
+    positionConversionRequest
+  );
+  console.log(response);
+  return response;
+};
 
 var exchangeMessage = async function (exchangeMessageRequest) {
-
-    let response = await xtsInteractive.exchangeMessage(exchangeMessageRequest);
-    console.log(response);
-    return response;
-
-}
+  let response = await xtsInteractive.exchangeMessage(exchangeMessageRequest);
+  console.log(response);
+  return response;
+};
 
 var exchangeStatus = async function (exchangeStatusRequest) {
-
-    let response = await xtsInteractive.exchangeStatus(sexchangeStatusRequest);
-    console.log(response);
-    return response;
-
-}
+  let response = await xtsInteractive.exchangeStatus(exchangeStatusRequest);
+  console.log(response);
+  return response;
+};
 
 var registerEvents = async function () {
+  //instantiating the listeners for all event related data
 
+  //"connect" event listener
+  xtsInteractiveWS.onConnect((connectData) => {
+    console.log(connectData);
+  });
 
-    //instantiating the listeners for all event related data
+  //"joined" event listener
+  xtsInteractiveWS.onJoined((joinedData) => {
+    console.log(joinedData);
+  });
 
-    //"connect" event listener
-    xtsInteractiveWS.onConnect((connectData) => {
-    
-        console.log(connectData);
-    
-    });
+  //"error" event listener
+  xtsInteractiveWS.onError((errorData) => {
+    console.log(errorData);
+  });
 
-    //"joined" event listener
-    xtsInteractiveWS.onJoined((joinedData) => {
-    
-        console.log(joinedData);
-    
-    });
+  //"disconnect" event listener
+  xtsInteractiveWS.onDisconnect((disconnectData) => {
+    console.log(disconnectData);
+  });
 
-    //"error" event listener
-    xtsInteractiveWS.onError((errorData) => {
-    
-        console.log(errorData);
-    
-    });
+  //"order" event listener
+  xtsInteractiveWS.onOrder((orderData) => {
+    console.log(orderData);
+  });
 
-    //"disconnect" event listener
-    xtsInteractiveWS.onDisconnect((disconnectData) => {
-    
-        console.log(disconnectData);
-    
-    });
+  //"trade" event listener
+  xtsInteractiveWS.onTrade((tradeData) => {
+    console.log(tradeData);
+  });
 
-    //"order" event listener
-    xtsInteractiveWS.onOrder((orderData) => {
-    
-        console.log(orderData);
-    
-    });
+  //"position" event listener
+  xtsInteractiveWS.onPosition((positionData) => {
+    console.log(positionData);
+  });
 
-    //"trade" event listener
-    xtsInteractiveWS.onTrade((tradeData) => {
-    
-        console.log(tradeData);
-    
-    });
-
-    //"position" event listener
-    xtsInteractiveWS.onPosition((positionData) => {
-    
-        console.log(positionData);
-    
-    });
-
-    //"logout" event listener
-    xtsInteractiveWS.onLogout((logoutData) => {
-
-        console.log(logoutData);
-    
-    });
-}
+  //"logout" event listener
+  xtsInteractiveWS.onLogout((logoutData) => {
+    console.log(logoutData);
+  });
+};
