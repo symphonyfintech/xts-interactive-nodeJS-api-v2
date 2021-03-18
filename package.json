@@ -20,6 +20,10 @@
     "socket.io-client": "~2.2.0",
     "linq": "~3.1.1"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/symphonyfintech/xts-interactive-nodeJS-api-v2"
+  },
   "directories": {
     "lib": "lib"
   },
