@@ -87,13 +87,8 @@ async function testAPI() {
   };
   await getHoldings(reqObject);
 
-  let orderBookRequest = {
-    clientID: userID,
-    appOrderID: 1200044795,
-  };
-
   // get user order book details
-  await getOrderBook(orderBookRequest);
+  await getOrderBook();
 
   reqObject = {
     clientID: userID,
@@ -257,8 +252,8 @@ var getHoldings = async function (reqObject) {
   return response;
 };
 
-var getOrderBook = async function (reqObject) {
-  let response = await xtsInteractive.getOrderBook(reqObject);
+var getOrderBook = async function () {
+  let response = await xtsInteractive.getOrderBook();
   console.log(response);
   return response;
 };
