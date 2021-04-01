@@ -229,7 +229,7 @@ var getEnums = async function (reqObject) {
 };
 
 var getBalance = async function (reqObject) {
-  let response = await xtsInteractive.getBalance(reqObject);
+  let response = await xtsInteractive.getBalance();
   console.log(response);
   return response;
 };

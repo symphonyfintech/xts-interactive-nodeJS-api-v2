@@ -39,6 +39,7 @@ call the login API to generate the token
 var loginRequest = {
   secretKey: 'Abcd@123',
   appKey: '5a75a3616cabe678',
+  source: 'WEBAPI',
 };
 
 let logIn = await xtsInteractive.logIn(loginRequest);
@@ -62,40 +63,58 @@ After token is generated, you can access the socket component and instantiate th
 var XTSInteractiveWS = require('xts-interactive-api').WS;
 xtsInteractiveWS = new XTSInteractiveWS(“https://developers.symphonyfintech.in”);
 var socketInitRequest = {
-	userID: “AJ01”,
-	apiType:“INTERACTIVE”,
-	token: logIn.result.token   // Token Generated after successful LogIn
-}
+      userID: "XYZ",
+      token: "ABCDJGJKHK", // Token Generated after successful LogIn
+    };
 xtsInteractiveWS.init(socketInitRequest);
 ```
 
 You can now register events to listen to the real time order and trade updates and will be receiving the json objects in the response.
 
 ```js
-xtsInteractiveWS.onConnect((connectData) => {
-  console.log(connectData);
-});
-xtsInteractiveWS.onJoined((joinedData) => {
-  console.log(joinedData);
-});
-xtsInteractiveWS.onError((errorData) => {
-  console.log(errorData);
-});
-xtsInteractiveWS.onDisconnect((disconnectData) => {
-  console.log(disconnectData);
-});
-xtsInteractiveWS.onOrder((orderData) => {
-  console.log(orderData);
-});
-xtsInteractiveWS.onTrade((tradeData) => {
-  console.log(tradeData);
-});
-xtsInteractiveWS.onPosition((positionData) => {
-  console.log(positionData);
-});
-xtsInteractiveWS.onLogout((logoutData) => {
-  console.log(logoutData);
-});
+var registerEvents = async function () {
+  //instantiating the listeners for all event related data
+
+  //"connect" event listener
+  xtsInteractiveWS.onConnect((connectData) => {
+    console.log(connectData);
+  });
+
+  //"joined" event listener
+  xtsInteractiveWS.onJoined((joinedData) => {
+    console.log(joinedData);
+  });
+
+  //"error" event listener
+  xtsInteractiveWS.onError((errorData) => {
+    console.log(errorData);
+  });
+
+  //"disconnect" event listener
+  xtsInteractiveWS.onDisconnect((disconnectData) => {
+    console.log(disconnectData);
+  });
+
+  //"order" event listener
+  xtsInteractiveWS.onOrder((orderData) => {
+    console.log(orderData);
+  });
+
+  //"trade" event listener
+  xtsInteractiveWS.onTrade((tradeData) => {
+    console.log(tradeData);
+  });
+
+  //"position" event listener
+  xtsInteractiveWS.onPosition((positionData) => {
+    console.log(positionData);
+  });
+
+  //"logout" event listener
+  xtsInteractiveWS.onLogout((logoutData) => {
+    console.log(logoutData);
+  });
+};
 ```
 
 ## Detailed explanation of API and socket related events
@@ -110,18 +129,19 @@ Calls POST /order.
 
 ```js
 let response = await xtsInteractive.placeOrder({
-  exchangeSegment: xtsInteractive.exchangeInfo.NSECM,
-  exchangeInstrumentID: 22, // can use "ACC-EQ" as well
-  productType: xtsInteractive.productTypes.MIS,
-  orderType: xtsInteractive.orderTypes.Limit,
-  orderSide: xtsInteractive.orderSide.BUY,
-  timeInForce: xtsInteractive.dayOrNet.DAY,
-  disclosedQuantity: 0,
-  orderQuantity: 20,
-  limitPrice: 1500.0,
-  stopPrice: 1600.0,
-  orderUniqueIdentifier: '45485',
-});
+    exchangeSegment: 'NSECM',
+    exchangeInstrumentID: 22,
+    productType: 'NRML',
+    orderType: 'MARKET',
+    orderSide: 'BUY',
+    timeInForce: 'DAY',
+    disclosedQuantity: 0,
+    orderQuantity: 20,
+    limitPrice: 1500.0,
+    stopPrice: 1600.0,
+    orderUniqueIdentifier: '45485',
+    clientID: userID,
+  };);
 ```
 
 ## modifyOrder
@@ -130,15 +150,16 @@ Calls PUT /order.
 
 ```js
 let response = await xtsInteractive.modifyOrder({
-  appOrderID: 1991237756,
-  modifiedProductType: xtsInteractive.productTypes.NRML,
-  modifiedOrderType: xtsInteractive.orderTypes.Limit,
+  appOrderID: 1200037025,
+  modifiedProductType: 'CO',
+  modifiedOrderType: 'MARKET',
   modifiedOrderQuantity: 100,
   modifiedDisclosedQuantity: 0,
   modifiedLimitPrice: 300,
   modifiedStopPrice: 300,
-  modifiedTimeInForce: xtsInteractive.dayOrNet.DAY,
-  orderUniqueIdentifier: '5656',
+  modifiedTimeInForce: 'DAY',
+  orderUniqueIdentifier: '454845',
+  clientID: userID,
 });
 ```
 
@@ -159,14 +180,16 @@ Calls POST /order/cover.
 
 ```js
 let response = await xtsInteractive.placeCoverOrder({
-  exchangeSegment: xtsInteractive.exchangeInfo.NSECM,
-  exchangeInstrumentID: 22, //can use "ACC-EQ" as well
-  orderSide: xtsInteractive.orderSide.BUY,
+  exchangeSegment: 'NSECM',
+  exchangeInstrumentID: 22,
+  orderSide: 'Buy',
   orderQuantity: 2,
-  disclosedQuantity: 2,
+  disclosedQuantity: 0,
   limitPrice: 2054,
   stopPrice: 2054,
+  orderType: 'MARKET',
   orderUniqueIdentifier: '45485',
+  clientID: userID,
 });
 ```
 
@@ -175,7 +198,11 @@ let response = await xtsInteractive.placeCoverOrder({
 Calls PUT /order/cover.
 
 ```js
-let response = await xtsInteractive.exitCoverOrder("2426016103"));
+let response = await xtsInteractive.exitCoverOrder({
+  appOrderID: '1400070884',
+  clientID: userID,
+  orderUniqueIdentifier: '454845',
+});
 ```
 
 ## getOrderBook
@@ -202,7 +229,8 @@ calls GET /portfolio/position
 
 ```js
 let response = await xtsInteractive.getPositions({
-  dayOrNet: xtsInteractive.dayOrNet.DAY,
+  dayOrNet: 'NetWise',
+  clientID: userID,
 });
 ```
 
@@ -213,27 +241,12 @@ Calls PUT /portfolio/position/convert
 ```js
 let response = await xtsInteractive.positionConversion({
   exchangeSegment: 'NSECM',
-  exchangeInstrumentID: 22,
-  oldProductType: xtsInteractive.productTypes.NRML,
-  newProductType: xtsInteractive.productTypes.MIS,
-  isDayWise: true,
-  targetQty: 1,
-});
-```
-
-## squareOff
-
-Calls PUT /portfolio/squareoff
-
-```js
-let response = await xtsInteractive.squareOff({
-  exchangeSegment: xtsInteractive.exchangeInfo.NSECM,
-  exchangeInstrumentID: 22,
-  productType: xtsInteractive.productTypes.NRML,
-  squareoffMode: xtsInteractive.positionSqureOffMode.DayWise,
-  positionSquareOffQuantityType:
-    xtsInteractive.positionSquareOffQuantityType.ExactQty,
-  squareOffQtyValue: 5,
+  exchangeInstrumentID: 1922,
+  oldProductType: 'MIS',
+  newProductType: 'CNC',
+  isDayWise: false,
+  targetQty: '1',
+  clientID: userID,
 });
 ```
 
@@ -265,20 +278,6 @@ Calls GET /users/profile
 
 ```js
 let response = await xtsInteractive.getProfile();
-```
-
-Below is the brief information related to streaming events provided by XTS-Interactive-API SDK.
-
-```js
-xtsInteractiveWS.init(socketInitRequest); // Init the socket instance
-xtsInteractiveWS.onConnect((connectData) => {}); //registering for Connect event
-xtsInteractiveWS.onJoined((joinedData) => {}); //registering for Joined event
-xtsInteractiveWS.onError((errorData) => {}); //registering for Error event
-xtsInteractiveWS.onDisconnect((disconnectData) => {}); //registering for Disconnect event
-xtsInteractiveWS.onOrder((orderData) => {}); //registering for Order event
-xtsInteractiveWS.onTrade((tradeData) => {}); //registering for Trade event
-xtsInteractiveWS.onPosition((positionData) => {}); //registering for Position event
-xtsInteractiveWS.onLogout((logoutData) => {}); //registering for Logout event
 ```
 
 We do have a market data component which will provide the streaming of our real-time streaming market data. For more info please check the following link.
