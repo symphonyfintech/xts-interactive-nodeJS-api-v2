@@ -30,7 +30,7 @@ var XTSInteractive = require('xts-interactive-api').Interactive;
 Creating the instance of xtsInteractive
 
 ```js
-xtsInteractive = new XTSInteractive(“https://developers.symphonyfintech.in”);
+xtsInteractive = new XTSInteractive('https://developers.symphonyfintech.in');
 ```
 
 call the login API to generate the token
@@ -61,11 +61,13 @@ After token is generated, you can access the socket component and instantiate th
 
 ```js
 var XTSInteractiveWS = require('xts-interactive-api').WS;
-xtsInteractiveWS = new XTSInteractiveWS(“https://developers.symphonyfintech.in”);
+xtsInteractiveWS = new XTSInteractiveWS(
+  'https://developers.symphonyfintech.in'
+);
 var socketInitRequest = {
-      userID: "XYZ",
-      token: "ABCDJGJKHK", // Token Generated after successful LogIn
-    };
+  userID: 'XYZ',
+  token: 'ABCDJGJKHK', // Token Generated after successful LogIn
+};
 xtsInteractiveWS.init(socketInitRequest);
 ```
 
