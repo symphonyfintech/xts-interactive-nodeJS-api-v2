@@ -1,6 +1,6 @@
 {
-  "name": "xts-interactive-api",
-  "version": "3.0.3",
+  "name": "@quantiply/xts-interactive-api",
+  "version": "3.0.4",
   "description": "The official JS client library for the Symphony Fintech Trading API's",
   "main": "./lib/",
   "keywords": [
@@ -22,7 +22,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/symphonyfintech/xts-interactive-nodeJS-api-v2"
+    "url": "https://github.com/sunilgautam/xts-interactive-nodeJS-api-v2"
   },
   "directories": {
     "lib": "lib"
